@@ -328,72 +328,13 @@ endif
 
 CXXFLAGS += -std=c++98
 
-OBJS :=
-OBJS += libretro.o
-OBJS += ../main.o
-OBJS += ../apu.o
-#OBJS += ../audio.o
-OBJS += ../audio_fds.o
-OBJS += ../audio_mmc5.o
-OBJS += ../audio_vrc6.o
-OBJS += ../audio_vrc7.o
-OBJS += ../audio_n163.o
-OBJS += ../audio_s5b.o
-#OBJS += ../alhelpers.o
-OBJS += ../cpu.o
-OBJS += ../ppu.o
-OBJS += ../mem.o
-OBJS += ../input.o
-OBJS += ../mapper.o
-OBJS += ../mapperList.o
-OBJS += ../fm2play.o
-OBJS += ../vrc_irq.o
-OBJS += ../mapper/common.o
-OBJS += ../mapper/fds.o
-OBJS += ../mapper/m13.o
-OBJS += ../mapper/m15.o
-OBJS += ../mapper/m137.o
-OBJS += ../mapper/m156.o
-OBJS += ../mapper/m162.o
-OBJS += ../mapper/m193.o
-OBJS += ../mapper/m28.o
-OBJS += ../mapper/m206.o
-OBJS += ../mapper/m225.o
-OBJS += ../mapper/m228.o
-OBJS += ../mapper/m237.o
-OBJS += ../mapper/m30.o
-OBJS += ../mapper/m31.o
-OBJS += ../mapper/m32.o
-OBJS += ../mapper/m33.o
-OBJS += ../mapper/m34.o
-OBJS += ../mapper/m48.o
-OBJS += ../mapper/m65.o
-OBJS += ../mapper/m77.o
-OBJS += ../mapper/m80.o
-OBJS += ../mapper/m82.o
-OBJS += ../mapper/mmc1.o
-OBJS += ../mapper/mmc2_4.o
-OBJS += ../mapper/mmc3.o
-OBJS += ../mapper/mmc3add.o
-OBJS += ../mapper/mmc5.o
-OBJS += ../mapper/namco.o
-OBJS += ../mapper/nsf.o
-OBJS += ../mapper/p16c8.o
-OBJS += ../mapper/p32c8.o
-OBJS += ../mapper/rambo1.o
-OBJS += ../mapper/s1.o
-OBJS += ../mapper/s3.o
-OBJS += ../mapper/s4.o
-OBJS += ../mapper/s5b.o
-OBJS += ../mapper/smb2c.o
-OBJS += ../mapper/vrc1.o
-OBJS += ../mapper/vrc2_4.o
-OBJS += ../mapper/vrc3.o
-OBJS += ../mapper/vrc6.o
-OBJS += ../mapper/vrc7.o
+CORE_DIR := ..
+
+include $(CORE_DIR)/libretro/Makefile.common
+
+OBJS := $(SOURCES_C:.c=.o)
 
 DEFINES  += -D__LIBRETRO__ $(PLATFORM_DEFINES)
-INCFLAGS += -I. -I..
 
 
 CFLAGS   += $(fpic) $(DEFINES) -Werror=implicit-function-declaration
