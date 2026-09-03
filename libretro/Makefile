@@ -31,14 +31,6 @@ endif
 
 version_script = link.T
 
-ifeq ($(ARCHFLAGS),)
-ifeq ($(archs),ppc)
-   ARCHFLAGS = -arch ppc -arch ppc64
-else
-   ARCHFLAGS = -arch i386 -arch x86_64
-endif
-endif
-
 # Unix
 ifeq ($(platform), unix)
 	TARGET := $(TARGET_NAME)_libretro.so
@@ -54,32 +46,63 @@ else ifeq ($(platform), osx)
 	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
 	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
 	#fpic += -mmacosx-version-min=10.1
-	ifndef ($(NOUNIVERSAL))
-		CFLAGS += $(ARCHFLAGS)
-		CXXFLAGS += $(ARCHFLAGS)
-		LDFLAGS += $(ARCHFLAGS)
-	endif
+
+   ifeq ($(CROSS_COMPILE),1)
+        TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
+        CFLAGS   += $(TARGET_RULE)
+        CPPFLAGS += $(TARGET_RULE)
+        CXXFLAGS += $(TARGET_RULE)
+        LDFLAGS  += $(TARGET_RULE)
+   endif
+
+   ifndef ($(NOUNIVERSAL))
+      CFLAGS  += $(ARCHFLAGS)
+      LDFLAGS += $(ARCHFLAGS)
+   endif
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
+   TARGET := $(TARGET_NAME)_libretro_ios.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib
+   MINVERSION :=
 
-	TARGET := $(TARGET_NAME)_libretro_ios.dylib
-	fpic := -fPIC
-	SHARED := -dynamiclib
-	ifeq ($(IOSSDK),)
-		IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
-	endif
-	CC := cc -arch armv7 -isysroot $(IOSSDK)
-	CXX := c++ -arch armv7 -isysroot $(IOSSDK)
-ifeq ($(platform),ios9)
-	CC += -miphoneos-version-min=8.0
-	CXX += -miphoneos-version-min=8.0
-	PLATFORM_DEFINES := -miphoneos-version-min=8.0
-else
-	CC += -miphoneos-version-min=5.0
-	CXX += -miphoneos-version-min=5.0
-	PLATFORM_DEFINES := -miphoneos-version-min=5.0
-endif
+   ifeq ($(IOSSDK),)
+      IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
+   endif
+
+   ifeq ($(platform),ios-arm64)
+      CC = cc -arch arm64 -isysroot $(IOSSDK)
+      CXX = c++ -arch arm64 -isysroot $(IOSSDK)
+   else
+      CC = cc -arch armv7 -isysroot $(IOSSDK)
+      CXX = c++ -arch arm64 -isysroot $(IOSSDK)
+   endif
+   ifeq ($(platform),$(filter $(platform),ios9 ios-arm64))
+        MINVERSION = -miphoneos-version-min=8.0
+   else
+        MINVERSION = -miphoneos-version-min=5.0
+   endif
+        PLATFORM_DEFINES += $(MINVERSION)
+        LDFLAGS += $(MINVERSION)
+
+# tvOS
+else ifeq ($(platform), tvos-arm64)
+   TARGET := $(TARGET_NAME)_libretro_tvos.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib
+   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+
+   ifeq ($(IOSSDK),)
+      IOSSDK := $(shell xcrun -sdk appletvos -show-sdk-path)
+   endif
+
+   CC = cc -arch arm64 -isysroot $(IOSSDK)
+   CXX = c++ -arch arm64 -isysroot $(IOSSDK)
+   MINVERSION = -mappletvos-version-min=11.0
+   PLATFORM_DEFINES += $(MINVERSION)
+   LDFLAGS += $(MINVERSION)
 
 # Theos
 else ifeq ($(platform), theos_ios)
@@ -328,72 +351,13 @@ endif
 
 CXXFLAGS += -std=c++98
 
-OBJS :=
-OBJS += libretro.o
-OBJS += ../main.o
-OBJS += ../apu.o
-#OBJS += ../audio.o
-OBJS += ../audio_fds.o
-OBJS += ../audio_mmc5.o
-OBJS += ../audio_vrc6.o
-OBJS += ../audio_vrc7.o
-OBJS += ../audio_n163.o
-OBJS += ../audio_s5b.o
-#OBJS += ../alhelpers.o
-OBJS += ../cpu.o
-OBJS += ../ppu.o
-OBJS += ../mem.o
-OBJS += ../input.o
-OBJS += ../mapper.o
-OBJS += ../mapperList.o
-OBJS += ../fm2play.o
-OBJS += ../vrc_irq.o
-OBJS += ../mapper/common.o
-OBJS += ../mapper/fds.o
-OBJS += ../mapper/m13.o
-OBJS += ../mapper/m15.o
-OBJS += ../mapper/m137.o
-OBJS += ../mapper/m156.o
-OBJS += ../mapper/m162.o
-OBJS += ../mapper/m193.o
-OBJS += ../mapper/m28.o
-OBJS += ../mapper/m206.o
-OBJS += ../mapper/m225.o
-OBJS += ../mapper/m228.o
-OBJS += ../mapper/m237.o
-OBJS += ../mapper/m30.o
-OBJS += ../mapper/m31.o
-OBJS += ../mapper/m32.o
-OBJS += ../mapper/m33.o
-OBJS += ../mapper/m34.o
-OBJS += ../mapper/m48.o
-OBJS += ../mapper/m65.o
-OBJS += ../mapper/m77.o
-OBJS += ../mapper/m80.o
-OBJS += ../mapper/m82.o
-OBJS += ../mapper/mmc1.o
-OBJS += ../mapper/mmc2_4.o
-OBJS += ../mapper/mmc3.o
-OBJS += ../mapper/mmc3add.o
-OBJS += ../mapper/mmc5.o
-OBJS += ../mapper/namco.o
-OBJS += ../mapper/nsf.o
-OBJS += ../mapper/p16c8.o
-OBJS += ../mapper/p32c8.o
-OBJS += ../mapper/rambo1.o
-OBJS += ../mapper/s1.o
-OBJS += ../mapper/s3.o
-OBJS += ../mapper/s4.o
-OBJS += ../mapper/s5b.o
-OBJS += ../mapper/smb2c.o
-OBJS += ../mapper/vrc1.o
-OBJS += ../mapper/vrc2_4.o
-OBJS += ../mapper/vrc3.o
-OBJS += ../mapper/vrc6.o
-OBJS += ../mapper/vrc7.o
+CORE_DIR := ..
+
+include $(CORE_DIR)/libretro/Makefile.common
+
+OBJS := $(SOURCES_C:.c=.o)
 
 DEFINES  += -D__LIBRETRO__ $(PLATFORM_DEFINES)
-INCFLAGS += -I. -I..
 
 
 CFLAGS   += $(fpic) $(DEFINES) -Werror=implicit-function-declaration
@@ -401,7 +365,11 @@ CXXFLAGS += $(fpic) $(DEFINES) -Werror=implicit-function-declaration
 
 LIBS :=
 
+# Apple's linker has no --no-undefined; an undefined symbol is an error there
+# without being asked
+ifeq (,$(findstring ios,$(platform))$(findstring osx,$(platform))$(findstring tvos,$(platform)))
 LDFLAGS += -Wl,--no-undefined
+endif
 
 %.o: %.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS) $(INCFLAGS)
@@ -417,14 +385,6 @@ ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C)
 include $(THEOS_MAKE_PATH)/library.mk
 else
 all: $(TARGET)
-
-ifeq ($(platform), osx)
-ifndef ($(NOUNIVERSAL))
-   CFLAGS += $(ARCHFLAGS)
-   CXXFLAGS += $(ARCHFLAGS)
-   LFLAGS += $(ARCHFLAGS)
-endif
-endif
 
 $(TARGET): $(OBJS)
 ifeq ($(STATIC_LINKING), 1)

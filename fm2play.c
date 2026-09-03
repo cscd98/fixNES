@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "fm2play.h"
 
 static char *fm2playIn = NULL;
